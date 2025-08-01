@@ -318,10 +318,9 @@ __spinner() {
   ) &
   JITSI_SPINNER_PID=$!
   
-  # Execute command and capture output
-  JITSI_SPINNER_OUTPUT=`eval "$JITSI_SPINNER_CMD" 2>&1`
+  # Execute command silently and capture output
+  eval "$JITSI_SPINNER_CMD" >/tmp/jitsi-spinner-output.$$ 2>&1
   JITSI_SPINNER_RC=$?
-  printf "%s\n" "$JITSI_SPINNER_OUTPUT" > /tmp/jitsi-spinner-output.$$
   
   # Stop spinner
   kill $JITSI_SPINNER_PID 2>/dev/null
@@ -2077,57 +2076,45 @@ __wait_for_container_health() {
   JITSI_WAIT_DB_PASSWORD="$3"  # Optional database password for MariaDB
   JITSI_WAIT_START=`date +%s`
   
-  __progress "Waiting for $JITSI_WAIT_CONTAINER to be healthy..."
+  # Create health check command based on container type
+  if [ "$JITSI_WAIT_CONTAINER" = "jitsi-mariadb" ] && [ -n "$JITSI_WAIT_DB_PASSWORD" ]; then
+    JITSI_HEALTH_CMD="docker exec $JITSI_WAIT_CONTAINER mariadb -u root -p'$JITSI_WAIT_DB_PASSWORD' -e 'SELECT 1' >/dev/null 2>&1"
+  elif [ "$JITSI_WAIT_CONTAINER" = "jitsi-valkey" ]; then
+    JITSI_HEALTH_CMD="docker exec $JITSI_WAIT_CONTAINER valkey-cli ping >/dev/null 2>&1"
+  else
+    JITSI_HEALTH_CMD="docker inspect -f '{{.State.Running}}' $JITSI_WAIT_CONTAINER 2>/dev/null | grep -q true"
+  fi
   
-  # Initial wait for container to start
-  sleep 3
-  
-  while true; do
-    JITSI_CONTAINER_STATUS=`docker inspect -f '{{.State.Running}}' "$JITSI_WAIT_CONTAINER" 2>/dev/null || printf "false"`
+  # Use spinner for health check
+  __spinner_health_check() {
+    # Initial wait
+    sleep 3
     
-    if [ "$JITSI_CONTAINER_STATUS" = "true" ]; then
-      # Special health check for MariaDB - check if it can accept connections
-      if [ "$JITSI_WAIT_CONTAINER" = "jitsi-mariadb" ]; then
-        if [ -n "$JITSI_WAIT_DB_PASSWORD" ]; then
-          if docker exec "$JITSI_WAIT_CONTAINER" mariadb -u root -p"$JITSI_WAIT_DB_PASSWORD" -e "SELECT 1" >/dev/null 2>&1; then
-            __success "$JITSI_WAIT_CONTAINER is ready"
-            return 0
-          fi
-        else
-          # Fallback: just check if mariadb process is running
-          if docker exec "$JITSI_WAIT_CONTAINER" pgrep mariadb >/dev/null 2>&1; then
-            __success "$JITSI_WAIT_CONTAINER is running"
-            return 0
-          fi
-        fi
-      # Special health check for Valkey/Redis
-      elif [ "$JITSI_WAIT_CONTAINER" = "jitsi-valkey" ]; then
-        if docker exec "$JITSI_WAIT_CONTAINER" valkey-cli ping >/dev/null 2>&1; then
-          __success "$JITSI_WAIT_CONTAINER is ready"
+    while true; do
+      # Check if container is running
+      if docker inspect -f '{{.State.Running}}' "$JITSI_WAIT_CONTAINER" 2>/dev/null | grep -q true; then
+        # Run health check command
+        if eval "$JITSI_HEALTH_CMD"; then
           return 0
         fi
-      # For other containers, just check if running
-      else
-        __success "$JITSI_WAIT_CONTAINER is running"
-        return 0
       fi
-    fi
-    
-    JITSI_WAIT_CURRENT=`date +%s`
-    JITSI_WAIT_ELAPSED=`expr $JITSI_WAIT_CURRENT - $JITSI_WAIT_START`
-    
-    if [ $JITSI_WAIT_ELAPSED -gt $JITSI_WAIT_TIMEOUT ]; then
-      __error "$JITSI_WAIT_CONTAINER failed to start within timeout"
-      return 1
-    fi
-    
-    # Show progress every 30 seconds, but not at 0
-    if [ $JITSI_WAIT_ELAPSED -ge 30 ] && [ `expr $JITSI_WAIT_ELAPSED % 30` -eq 0 ]; then
-      __info "Still waiting for $JITSI_WAIT_CONTAINER... ${JITSI_WAIT_ELAPSED}s elapsed"
-    fi
-    
-    sleep 2
-  done
+      
+      # Check timeout
+      JITSI_WAIT_CURRENT=`date +%s`
+      JITSI_WAIT_ELAPSED=`expr $JITSI_WAIT_CURRENT - $JITSI_WAIT_START`
+      if [ $JITSI_WAIT_ELAPSED -gt $JITSI_WAIT_TIMEOUT ]; then
+        return 1
+      fi
+      
+      sleep 2
+    done
+  }
+  
+  # Run health check with spinner
+  __spinner "Waiting for $JITSI_WAIT_CONTAINER" "__spinner_health_check" || {
+    __error "$JITSI_WAIT_CONTAINER failed to start within timeout"
+    return 1
+  }
 }
 
 __deploy_mariadb() {
@@ -3304,6 +3291,7 @@ __main() {
   
   # Configuration Files
   __create_env_file
+  __load_env_file
   __store_passwords
   
   # Nginx Configuration
