@@ -1,0 +1,90 @@
+# Shell script development
+*.swp
+*.swo
+*~
+.*.swp
+.*.swo
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.pid
+*.lock
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor directories
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Test artifacts
+test-results/
+coverage/
+*.coverage
+
+# Build artifacts
+build/
+dist/
+*.tar.gz
+*.zip
+
+# Environment files (except examples)
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Credentials
+.passwords
+*.key
+*.pem
+*.crt
+*.csr
+
+# Installation artifacts
+/tmp/
+/temp/
+
+# Documentation build
+docs/_build/
+docs/.doctrees/
+site/
+
+# Python (for mkdocs)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv
+
+# Node.js (if used for documentation)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Logs
+logs/
+*.log
+
+# Local development
+.local/
+.cache/
