@@ -199,13 +199,46 @@ __log_message() {
   printf "[%s] [%s] %s\n" "$JITSI_LOG_TIMESTAMP" "$JITSI_LOG_LEVEL" "$JITSI_LOG_MESSAGE" >> "$JITSI_SCRIPT_LOG_FILE" 2>/dev/null || true
 }
 
+# Printf helper functions for consistent color output
+printf_newline_color() {
+  # Usage: printf_newline_color COLOR "format string" args...
+  local color="$1"
+  shift
+  printf "${color}${1}${JITSI_NC}\n" "$@"
+}
+
+printf_newline_nc() {
+  # Usage: printf_newline_nc "format string" args...
+  printf "${1}\n" "$@"
+}
+
+printf_reset_color() {
+  # Usage: printf_reset_color COLOR "format string" args...
+  local color="$1"
+  shift
+  printf "${color}${1}${JITSI_NC}" "$@"
+}
+
+printf_reset_nc() {
+  # Usage: printf_reset_nc "format string" args...
+  printf "${1}" "$@"
+}
+
+printf_log() {
+  # Usage: printf_log LEVEL PREFIX "message"
+  local level="$1"
+  local prefix="$2"
+  local message="$3"
+  printf "%s%s\n" "$prefix" "$message"
+  __log_message "$level" "$message"
+}
+
 __info() {
-  printf "%s%s\n" "$INFO_PREFIX" "$1"
-  __log_message "INFO" "$1"
+  printf_log "INFO" "$INFO_PREFIX" "$1"
 }
 
 __success() {
-  printf "%s${JITSI_GREEN}%s${JITSI_NC}\n" "$SUCCESS_PREFIX" "$1"
+  printf "${SUCCESS_PREFIX}%s\n" "$1"
   __log_message "SUCCESS" "$1"
 }
 
