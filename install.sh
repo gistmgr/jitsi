@@ -203,7 +203,9 @@ printf_newline_color() {
   # Usage: printf_newline_color COLOR "format string" args...
   local color="$1"
   shift
-  printf "${color}${1}${JITSI_NC}\n" "$@"
+  local format="$1"
+  shift
+  printf "${color}${format}${JITSI_NC}\n" "$@"
 }
 
 printf_newline_nc() {
@@ -217,7 +219,9 @@ printf_reset_color() {
   # Usage: printf_reset_color COLOR "format string" args...
   local color="$1"
   shift
-  printf "${color}${1}${JITSI_NC}" "$@"
+  local format="$1"
+  shift
+  printf "${color}${format}${JITSI_NC}" "$@"
 }
 
 printf_reset_nc() {
@@ -439,8 +443,12 @@ __validate_system_resources() {
   JITSI_CPU_CORES=`nproc`
   
   # Get available disk space in GB
-  JITSI_AVAILABLE_DISK_KB=`df -k "$JITSI_BASE_DIR" 2>/dev/null || df -k / | tail -1 | awk '{print $4}'`
-  JITSI_AVAILABLE_DISK_GB=`expr $JITSI_AVAILABLE_DISK_KB / 1024 / 1024`
+  JITSI_AVAILABLE_DISK_KB=`df -k "$JITSI_BASE_DIR" 2>/dev/null || df -k / | awk 'NR==2 {print $4}'`
+  # Check if we got a valid number
+  if [ -z "$JITSI_AVAILABLE_DISK_KB" ] || ! expr "$JITSI_AVAILABLE_DISK_KB" : '[0-9]*$' >/dev/null; then
+    JITSI_AVAILABLE_DISK_KB=0
+  fi
+  JITSI_AVAILABLE_DISK_GB=`expr $JITSI_AVAILABLE_DISK_KB / 1024 / 1024 2>/dev/null || echo 0`
   
   # Check memory
   if [ $JITSI_TOTAL_MEMORY_MB -lt $JITSI_MIN_MEMORY_MB ]; then
@@ -1105,6 +1113,11 @@ __create_directory_structure() {
   # Create cron log directory
   if [ ! -d "$JITSI_CRON_LOG_DIR" ]; then
     mkdir -p "$JITSI_CRON_LOG_DIR" || __handle_error "Failed to create cron log directory"
+  fi
+  
+  # Create temp directory
+  if [ ! -d "$JITSI_TEMP_DIR" ]; then
+    mkdir -p "$JITSI_TEMP_DIR" || __handle_error "Failed to create temp directory"
   fi
   
   __success "Directory structure created successfully"
