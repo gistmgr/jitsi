@@ -56,6 +56,54 @@ sudo certbot certonly --standalone \
 openssl x509 -in /path/to/cert -text -noout
 ```
 
+#### SSL Certificate and Private Key Mismatch
+
+**Symptoms**:
+- Installation fails with "SSL certificate and private key do not match!"
+- This commonly occurs with EC (Elliptic Curve) certificates
+
+**Solution**:
+```bash
+# Check if you have an EC or RSA key
+openssl pkey -in /etc/letsencrypt/live/domain/privkey.pem -noout -text | grep -E "RSA|EC"
+
+# For RSA keys - verify match using modulus
+openssl x509 -in /etc/letsencrypt/live/domain/fullchain.pem -noout -modulus | md5sum
+openssl rsa -in /etc/letsencrypt/live/domain/privkey.pem -noout -modulus | md5sum
+
+# For EC keys - verify match using public key
+openssl x509 -in /etc/letsencrypt/live/domain/fullchain.pem -noout -pubkey > cert.pub
+openssl ec -in /etc/letsencrypt/live/domain/privkey.pem -pubout > key.pub
+diff cert.pub key.pub
+
+# The installer now automatically handles both RSA and EC certificates
+```
+
+#### Nginx Configuration Conflicts
+
+**Symptoms**:
+- Jitsi loads wrong page (e.g., Cockpit login)
+- 403 Forbidden errors
+- Wrong site displays when accessing Jitsi
+
+**Solution**:
+```bash
+# Check for conflicting nginx configs
+ls -la /etc/nginx/vhosts.d/
+
+# Look for default_server configs
+grep -l "default_server" /etc/nginx/vhosts.d/*.conf
+
+# Look for configs without server_name
+grep -L "server_name" /etc/nginx/vhosts.d/*.conf
+
+# Disable conflicting configs
+mv /etc/nginx/vhosts.d/conflicting.conf /etc/nginx/vhosts.d/conflicting.conf.disabled
+
+# Test and reload nginx
+nginx -t && systemctl reload nginx
+```
+
 #### Docker Installation Failed
 
 **Symptoms**:

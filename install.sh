@@ -1409,12 +1409,27 @@ __validate_ssl_certificates() {
     fi
     
     # Validate certificate and key match
-    JITSI_CERT_MODULUS=`openssl x509 -in "$JITSI_SSL_CERT_PATH" -noout -modulus 2>/dev/null | md5sum | cut -d' ' -f1`
-    JITSI_KEY_MODULUS=`openssl rsa -in "$JITSI_SSL_KEY_PATH" -noout -modulus 2>/dev/null | md5sum | cut -d' ' -f1`
+    # First check if it's an RSA or EC key
+    JITSI_KEY_TYPE=`openssl pkey -in "$JITSI_SSL_KEY_PATH" -noout -text 2>/dev/null | grep -E "RSA Private|EC Private" | head -1`
     
-    if [ "$JITSI_CERT_MODULUS" != "$JITSI_KEY_MODULUS" ]; then
-      __error "SSL certificate and private key do not match!"
-      exit $JITSI_EXIT_PREREQ
+    if echo "$JITSI_KEY_TYPE" | grep -q "RSA"; then
+      # RSA key validation
+      JITSI_CERT_MODULUS=`openssl x509 -in "$JITSI_SSL_CERT_PATH" -noout -modulus 2>/dev/null | md5sum | cut -d' ' -f1`
+      JITSI_KEY_MODULUS=`openssl rsa -in "$JITSI_SSL_KEY_PATH" -noout -modulus 2>/dev/null | md5sum | cut -d' ' -f1`
+      
+      if [ "$JITSI_CERT_MODULUS" != "$JITSI_KEY_MODULUS" ]; then
+        __error "SSL certificate and private key do not match!"
+        exit $JITSI_EXIT_PREREQ
+      fi
+    else
+      # EC key validation - compare public keys
+      JITSI_CERT_PUBKEY=`openssl x509 -in "$JITSI_SSL_CERT_PATH" -noout -pubkey 2>/dev/null | openssl md5`
+      JITSI_KEY_PUBKEY=`openssl pkey -in "$JITSI_SSL_KEY_PATH" -pubout 2>/dev/null | openssl md5`
+      
+      if [ "$JITSI_CERT_PUBKEY" != "$JITSI_KEY_PUBKEY" ]; then
+        __error "SSL certificate and private key do not match!"
+        exit $JITSI_EXIT_PREREQ
+      fi
     fi
   fi
   
@@ -1803,6 +1818,36 @@ EOF
 
 __generate_all_vhost_configs() {
   __header "Generating Nginx vHost Configurations"
+  
+  # Check for existing nginx configurations that might conflict
+  __check_nginx_conflicts() {
+    local domain="$1"
+    local vhost_file="/etc/nginx/vhosts/${domain}.conf"
+    
+    if [ -f "$vhost_file" ]; then
+      __warning "Existing nginx configuration found: $vhost_file"
+      __info "Backing up existing configuration to ${vhost_file}.backup"
+      mv "$vhost_file" "${vhost_file}.backup"
+    fi
+    
+    # Check for default server configs that might intercept requests
+    for conf in /etc/nginx/vhosts/*.conf; do
+      if [ -f "$conf" ]; then
+        if grep -q "default_server" "$conf" 2>/dev/null; then
+          __warning "Found default_server in $conf - this may intercept requests"
+          __info "Consider disabling: mv $conf ${conf}.disabled"
+        fi
+        # Check for configs without server_name that catch all requests
+        if ! grep -q "server_name" "$conf" 2>/dev/null && grep -q "listen.*443" "$conf" 2>/dev/null; then
+          __warning "Config $conf listens on 443 without server_name - may intercept requests"
+          __info "Consider disabling: mv $conf ${conf}.disabled"
+        fi
+      fi
+    done
+  }
+  
+  # Check for conflicts before creating configs
+  __check_nginx_conflicts "$JITSI_DOMAIN"
   
   # Main domain (comprehensive config)
   __info "Creating vhost: $JITSI_DOMAIN"
