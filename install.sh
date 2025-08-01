@@ -211,43 +211,43 @@ __log_message() {
 # Printf helper functions for consistent color output
 printf_newline_color() {
   # Usage: printf_newline_color COLOR "format string" args...
-  local color="$1"
+  JITSI_PRINT_COLOR="$1"
   shift
-  local format="$1"
+  JITSI_PRINT_FORMAT="$1"
   shift
-  printf "${color}${format}${JITSI_NC}\n" "$@"
+  printf "${JITSI_PRINT_COLOR}${JITSI_PRINT_FORMAT}${JITSI_NC}\n" "$@"
 }
 
 printf_newline_nc() {
   # Usage: printf_newline_nc "format string" args...
-  local format="$1"
+  JITSI_PRINT_FORMAT="$1"
   shift
-  printf "${format}\n" "$@"
+  printf "${JITSI_PRINT_FORMAT}\n" "$@"
 }
 
 printf_reset_color() {
   # Usage: printf_reset_color COLOR "format string" args...
-  local color="$1"
+  JITSI_PRINT_COLOR="$1"
   shift
-  local format="$1"
+  JITSI_PRINT_FORMAT="$1"
   shift
-  printf "${color}${format}${JITSI_NC}" "$@"
+  printf "${JITSI_PRINT_COLOR}${JITSI_PRINT_FORMAT}${JITSI_NC}" "$@"
 }
 
 printf_reset_nc() {
   # Usage: printf_reset_nc "format string" args...
-  local format="$1"
+  JITSI_PRINT_FORMAT="$1"
   shift
-  printf "${format}" "$@"
+  printf "${JITSI_PRINT_FORMAT}" "$@"
 }
 
 printf_log() {
   # Usage: printf_log LEVEL PREFIX "message"
-  local level="$1"
-  local prefix="$2"
-  local message="$3"
-  printf "%s%s\n" "$prefix" "$message"
-  __log_message "$level" "$message"
+  JITSI_LOG_LEVEL="$1"
+  JITSI_LOG_PREFIX="$2"
+  JITSI_LOG_MESSAGE="$3"
+  printf "%s%s\n" "$JITSI_LOG_PREFIX" "$JITSI_LOG_MESSAGE"
+  __log_message "$JITSI_LOG_LEVEL" "$JITSI_LOG_MESSAGE"
 }
 
 __info() {
