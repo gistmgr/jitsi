@@ -91,30 +91,40 @@ JITSI_DEBUG_MODE="false"
 # Section 3: Color System and Visual Elements
 __init_colors() {
   if [ -t 1 ] && [ "$JITSI_RAW_OUTPUT" = "false" ]; then
-    # Terminal colors
-    JITSI_RED=$'\033[0;31m'
-    JITSI_GREEN=$'\033[0;32m'
-    JITSI_YELLOW=$'\033[0;33m'
-    JITSI_BLUE=$'\033[0;34m'
-    JITSI_PURPLE=$'\033[0;35m'
-    JITSI_CYAN=$'\033[0;36m'
-    JITSI_WHITE=$'\033[0;37m'
-    JITSI_BOLD=$'\033[1m'
-    JITSI_DIM=$'\033[2m'
-    JITSI_NC=$'\033[0m'
+    # Dracula-inspired color palette (POSIX-compliant)
+    # Background: #282a36, Foreground: #f8f8f2
+    # Colors based on Dracula theme
+    JITSI_RED=`printf '\033[38;5;203m'`        # #ff5555 - Dracula red
+    JITSI_GREEN=`printf '\033[38;5;84m'`       # #50fa7b - Dracula green
+    JITSI_YELLOW=`printf '\033[38;5;228m'`     # #f1fa8c - Dracula yellow
+    JITSI_BLUE=`printf '\033[38;5;117m'`       # #8be9fd - Dracula cyan
+    JITSI_PURPLE=`printf '\033[38;5;141m'`     # #bd93f9 - Dracula purple
+    JITSI_CYAN=`printf '\033[38;5;159m'`       # #8be9fd - Dracula cyan variant
+    JITSI_PINK=`printf '\033[38;5;212m'`       # #ff79c6 - Dracula pink
+    JITSI_ORANGE=`printf '\033[38;5;215m'`     # #ffb86c - Dracula orange
+    JITSI_WHITE=`printf '\033[38;5;253m'`      # #f8f8f2 - Dracula foreground
+    JITSI_GRAY=`printf '\033[38;5;248m'`       # #6272a4 - Dracula comment
+    JITSI_BOLD=`printf '\033[1m'`
+    JITSI_DIM=`printf '\033[2m'`
+    JITSI_ITALIC=`printf '\033[3m'`
+    JITSI_UNDERLINE=`printf '\033[4m'`
+    JITSI_NC=`printf '\033[0m'`
     
     # Bright colors
-    JITSI_BRIGHT_RED=$'\033[1;31m'
-    JITSI_BRIGHT_GREEN=$'\033[1;32m'
-    JITSI_BRIGHT_YELLOW=$'\033[1;33m'
-    JITSI_BRIGHT_BLUE=$'\033[1;34m'
-    JITSI_BRIGHT_PURPLE=$'\033[1;35m'
-    JITSI_BRIGHT_CYAN=$'\033[1;36m'
+    JITSI_BRIGHT_RED=`printf '\033[1;38;5;203m'`
+    JITSI_BRIGHT_GREEN=`printf '\033[1;38;5;84m'`
+    JITSI_BRIGHT_YELLOW=`printf '\033[1;38;5;228m'`
+    JITSI_BRIGHT_BLUE=`printf '\033[1;38;5;117m'`
+    JITSI_BRIGHT_PURPLE=`printf '\033[1;38;5;141m'`
+    JITSI_BRIGHT_CYAN=`printf '\033[1;38;5;159m'`
+    JITSI_BRIGHT_PINK=`printf '\033[1;38;5;212m'`
     
     # Background colors
-    JITSI_BG_GREEN=$'\033[42m'
-    JITSI_BG_RED=$'\033[41m'
-    JITSI_BG_BLUE=$'\033[44m'
+    JITSI_BG_GREEN=`printf '\033[48;5;84m\033[38;5;232m'`
+    JITSI_BG_RED=`printf '\033[48;5;203m\033[38;5;232m'`
+    JITSI_BG_BLUE=`printf '\033[48;5;117m\033[38;5;232m'`
+    JITSI_BG_PURPLE=`printf '\033[48;5;141m\033[38;5;232m'`
+    JITSI_BG_DARK=`printf '\033[48;5;236m'`
     
     # Visual symbols
     JITSI_CHECKMARK="✓"
@@ -275,6 +285,54 @@ __input() {
   fi
   
   printf_reset_nc "%s " "$prompt:"
+}
+
+# Spinner function for long-running operations
+__spinner() {
+  # Usage: __spinner "message" "command"
+  JITSI_SPINNER_MSG="$1"
+  JITSI_SPINNER_CMD="$2"
+  JITSI_SPINNER_PID=""
+  JITSI_SPINNER_CHARS="⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+  JITSI_SPINNER_DELAY="0.1"
+  
+  # Start spinner in background
+  (
+    i=0
+    while true; do
+      char=`printf "%s" "$JITSI_SPINNER_CHARS" | cut -c$((i+1))`
+      printf "\r${PROGRESS_PREFIX}%s %s  " "$JITSI_SPINNER_MSG" "$char"
+      sleep "$JITSI_SPINNER_DELAY"
+      i=$(((i+1) % 10))
+    done
+  ) &
+  JITSI_SPINNER_PID=$!
+  
+  # Execute command
+  eval "$JITSI_SPINNER_CMD" >/tmp/jitsi-spinner-output.$$ 2>&1
+  JITSI_SPINNER_RC=$?
+  
+  # Stop spinner
+  kill $JITSI_SPINNER_PID 2>/dev/null
+  wait $JITSI_SPINNER_PID 2>/dev/null
+  
+  # Clear spinner line
+  printf "\r%40s\r" " "
+  
+  # Show result
+  if [ $JITSI_SPINNER_RC -eq 0 ]; then
+    __success "$JITSI_SPINNER_MSG"
+  else
+    __error "$JITSI_SPINNER_MSG failed"
+    if [ -f /tmp/jitsi-spinner-output.$$ ]; then
+      cat /tmp/jitsi-spinner-output.$$
+    fi
+  fi
+  
+  # Cleanup
+  rm -f /tmp/jitsi-spinner-output.$$
+  
+  return $JITSI_SPINNER_RC
 }
 
 __header() {
@@ -1990,15 +2048,14 @@ __manage_container() {
   fi
   
   # Create new container
-  __progress "Creating container with image: $JITSI_CONTAINER_IMAGE"
-  # Build and execute the docker run command
+  # Build the docker run command
   JITSI_DOCKER_CMD="docker run $JITSI_CONTAINER_ARGS"
   if [ "$JITSI_DEBUG_MODE" = "true" ]; then
     __info "Docker command: $JITSI_DOCKER_CMD"
   fi
-  eval "$JITSI_DOCKER_CMD" 2>&1 || __handle_error "Failed to create container: $JITSI_CONTAINER_NAME"
   
-  __success "Container $JITSI_CONTAINER_NAME deployed"
+  # Use spinner for container creation
+  __spinner "Deploying $JITSI_CONTAINER_NAME" "$JITSI_DOCKER_CMD" || __handle_error "Failed to create container: $JITSI_CONTAINER_NAME"
 }
 
 __wait_for_container_health() {
