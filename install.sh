@@ -91,40 +91,57 @@ JITSI_DEBUG_MODE="false"
 # Section 3: Color System and Visual Elements
 __init_colors() {
   if [ -t 1 ] && [ "$JITSI_RAW_OUTPUT" = "false" ]; then
-    # Dracula-inspired color palette (POSIX-compliant)
-    # Background: #282a36, Foreground: #f8f8f2
-    # Colors based on Dracula theme
-    JITSI_RED=`printf '\033[38;5;203m'`        # #ff5555 - Dracula red
-    JITSI_GREEN=`printf '\033[38;5;84m'`       # #50fa7b - Dracula green
-    JITSI_YELLOW=`printf '\033[38;5;228m'`     # #f1fa8c - Dracula yellow
-    JITSI_BLUE=`printf '\033[38;5;117m'`       # #8be9fd - Dracula cyan
-    JITSI_PURPLE=`printf '\033[38;5;141m'`     # #bd93f9 - Dracula purple
-    JITSI_CYAN=`printf '\033[38;5;159m'`       # #8be9fd - Dracula cyan variant
-    JITSI_PINK=`printf '\033[38;5;212m'`       # #ff79c6 - Dracula pink
-    JITSI_ORANGE=`printf '\033[38;5;215m'`     # #ffb86c - Dracula orange
-    JITSI_WHITE=`printf '\033[38;5;253m'`      # #f8f8f2 - Dracula foreground
-    JITSI_GRAY=`printf '\033[38;5;248m'`       # #6272a4 - Dracula comment
+    # Check terminal color support
+    JITSI_TERM_COLORS=`tput colors 2>/dev/null || printf "8"`
+    
+    if [ "$JITSI_TERM_COLORS" -ge 256 ]; then
+      # Dracula-inspired 256-color palette
+      JITSI_RED=`printf '\033[38;5;203m'`        # #ff5555 - Dracula red
+      JITSI_GREEN=`printf '\033[38;5;84m'`       # #50fa7b - Dracula green
+      JITSI_YELLOW=`printf '\033[38;5;228m'`     # #f1fa8c - Dracula yellow
+      JITSI_BLUE=`printf '\033[38;5;117m'`       # #8be9fd - Dracula cyan
+      JITSI_PURPLE=`printf '\033[38;5;141m'`     # #bd93f9 - Dracula purple
+      JITSI_CYAN=`printf '\033[38;5;159m'`       # #8be9fd - Dracula cyan variant
+      JITSI_PINK=`printf '\033[38;5;212m'`       # #ff79c6 - Dracula pink
+      JITSI_ORANGE=`printf '\033[38;5;215m'`     # #ffb86c - Dracula orange
+      JITSI_WHITE=`printf '\033[38;5;253m'`      # #f8f8f2 - Dracula foreground
+      JITSI_GRAY=`printf '\033[38;5;248m'`       # #6272a4 - Dracula comment
+    else
+      # Fallback to basic 16-color ANSI
+      JITSI_RED=`printf '\033[0;31m'`
+      JITSI_GREEN=`printf '\033[0;32m'`
+      JITSI_YELLOW=`printf '\033[0;33m'`
+      JITSI_BLUE=`printf '\033[0;34m'`
+      JITSI_PURPLE=`printf '\033[0;35m'`
+      JITSI_CYAN=`printf '\033[0;36m'`
+      JITSI_PINK=`printf '\033[0;35m'`        # Use magenta as pink
+      JITSI_ORANGE=`printf '\033[0;33m'`      # Use yellow as orange
+      JITSI_WHITE=`printf '\033[0;37m'`
+      JITSI_GRAY=`printf '\033[0;90m'`        # Bright black
+    fi
+    
+    # Common formatting codes
     JITSI_BOLD=`printf '\033[1m'`
     JITSI_DIM=`printf '\033[2m'`
     JITSI_ITALIC=`printf '\033[3m'`
     JITSI_UNDERLINE=`printf '\033[4m'`
     JITSI_NC=`printf '\033[0m'`
     
-    # Bright colors
-    JITSI_BRIGHT_RED=`printf '\033[1;38;5;203m'`
-    JITSI_BRIGHT_GREEN=`printf '\033[1;38;5;84m'`
-    JITSI_BRIGHT_YELLOW=`printf '\033[1;38;5;228m'`
-    JITSI_BRIGHT_BLUE=`printf '\033[1;38;5;117m'`
-    JITSI_BRIGHT_PURPLE=`printf '\033[1;38;5;141m'`
-    JITSI_BRIGHT_CYAN=`printf '\033[1;38;5;159m'`
-    JITSI_BRIGHT_PINK=`printf '\033[1;38;5;212m'`
+    # Bright colors (work in both modes)
+    JITSI_BRIGHT_RED=`printf '\033[1;31m'`
+    JITSI_BRIGHT_GREEN=`printf '\033[1;32m'`
+    JITSI_BRIGHT_YELLOW=`printf '\033[1;33m'`
+    JITSI_BRIGHT_BLUE=`printf '\033[1;34m'`
+    JITSI_BRIGHT_PURPLE=`printf '\033[1;35m'`
+    JITSI_BRIGHT_CYAN=`printf '\033[1;36m'`
+    JITSI_BRIGHT_PINK=`printf '\033[1;35m'`
     
     # Background colors
-    JITSI_BG_GREEN=`printf '\033[48;5;84m\033[38;5;232m'`
-    JITSI_BG_RED=`printf '\033[48;5;203m\033[38;5;232m'`
-    JITSI_BG_BLUE=`printf '\033[48;5;117m\033[38;5;232m'`
-    JITSI_BG_PURPLE=`printf '\033[48;5;141m\033[38;5;232m'`
-    JITSI_BG_DARK=`printf '\033[48;5;236m'`
+    JITSI_BG_GREEN=`printf '\033[42m'`
+    JITSI_BG_RED=`printf '\033[41m'`
+    JITSI_BG_BLUE=`printf '\033[44m'`
+    JITSI_BG_PURPLE=`printf '\033[45m'`
+    JITSI_BG_DARK=`printf '\033[40m'`
     
     # Visual symbols
     JITSI_CHECKMARK="✓"
@@ -138,15 +155,15 @@ __init_colors() {
     JITSI_DOCKER="🐳"
     
     # Prefixes with Dracula colors and emojis
-    INFO_PREFIX="${JITSI_BRIGHT_CYAN}ℹ${JITSI_NC} "
-    SUCCESS_PREFIX="${JITSI_BRIGHT_GREEN}${JITSI_CHECKMARK}${JITSI_NC} "
-    WARNING_PREFIX="${JITSI_BRIGHT_YELLOW}⚠${JITSI_NC} "
-    ERROR_PREFIX="${JITSI_BRIGHT_RED}${JITSI_CROSSMARK}${JITSI_NC} "
-    INPUT_PREFIX="${JITSI_BRIGHT_PURPLE}❯${JITSI_NC} "
-    PROGRESS_PREFIX="${JITSI_BRIGHT_PINK}${JITSI_GEAR}${JITSI_NC} "
-    SECURITY_PREFIX="${JITSI_BRIGHT_PURPLE}${JITSI_LOCK}${JITSI_NC} "
-    NETWORK_PREFIX="${JITSI_BRIGHT_CYAN}${JITSI_GLOBE}${JITSI_NC} "
-    DOCKER_PREFIX="${JITSI_BRIGHT_BLUE}${JITSI_DOCKER}${JITSI_NC} "
+    INFO_PREFIX=`printf "%sℹ%s " "$JITSI_BRIGHT_CYAN" "$JITSI_NC"`
+    SUCCESS_PREFIX=`printf "%s%s%s " "$JITSI_BRIGHT_GREEN" "$JITSI_CHECKMARK" "$JITSI_NC"`
+    WARNING_PREFIX=`printf "%s⚠%s " "$JITSI_BRIGHT_YELLOW" "$JITSI_NC"`
+    ERROR_PREFIX=`printf "%s%s%s " "$JITSI_BRIGHT_RED" "$JITSI_CROSSMARK" "$JITSI_NC"`
+    INPUT_PREFIX=`printf "%s❯%s " "$JITSI_BRIGHT_PURPLE" "$JITSI_NC"`
+    PROGRESS_PREFIX=`printf "%s%s%s " "$JITSI_BRIGHT_PINK" "$JITSI_GEAR" "$JITSI_NC"`
+    SECURITY_PREFIX=`printf "%s%s%s " "$JITSI_BRIGHT_PURPLE" "$JITSI_LOCK" "$JITSI_NC"`
+    NETWORK_PREFIX=`printf "%s%s%s " "$JITSI_BRIGHT_CYAN" "$JITSI_GLOBE" "$JITSI_NC"`
+    DOCKER_PREFIX=`printf "%s%s%s " "$JITSI_BRIGHT_BLUE" "$JITSI_DOCKER" "$JITSI_NC"`
   else
     # Plain text equivalents for raw mode
     JITSI_RED=""
