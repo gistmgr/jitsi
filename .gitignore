@@ -88,3 +88,4 @@ logs/
 # Local development
 .local/
 .cache/
+.claude
