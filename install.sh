@@ -2060,7 +2060,7 @@ __deploy_mariadb() {
   __progress "Creating Keycloak database..."
   sleep 10  # Wait for MariaDB to fully initialize
   
-  docker exec jitsi-mariadb mysql -u root -p"$JITSI_MARIADB_ROOT_PASSWORD" -e "
+  docker exec jitsi-mariadb mariadb -u root -p"$JITSI_MARIADB_ROOT_PASSWORD" -e "
     CREATE DATABASE IF NOT EXISTS keycloak;
     CREATE USER IF NOT EXISTS 'keycloak'@'%' IDENTIFIED BY '$JITSI_KEYCLOAK_DB_PASSWORD';
     GRANT ALL PRIVILEGES ON keycloak.* TO 'keycloak'@'%';
@@ -2505,7 +2505,7 @@ cleanup_prosody_rooms() {
 cleanup_database_rooms() {
   log_message "Starting database room cleanup..."
   
-  docker exec jitsi-mariadb mysql -u root -p"$JITSI_MARIADB_ROOT_PASSWORD" jitsi -e "
+  docker exec jitsi-mariadb mariadb -u root -p"$JITSI_MARIADB_ROOT_PASSWORD" jitsi -e "
     DELETE FROM room_history WHERE created_at < DATE_SUB(NOW(), INTERVAL 7 DAY);
     OPTIMIZE TABLE room_history;
   " || {
@@ -2573,7 +2573,7 @@ log_message() {
 optimize_mariadb() {
   log_message "Starting MariaDB optimization..."
   
-  docker exec jitsi-mariadb mysqlcheck -u root -p"$JITSI_MARIADB_ROOT_PASSWORD" --optimize --all-databases || {
+  docker exec jitsi-mariadb mariadb-check -u root -p"$JITSI_MARIADB_ROOT_PASSWORD" --optimize --all-databases || {
     log_message "ERROR: Failed to optimize MariaDB"
     return 1
   }
@@ -2753,7 +2753,7 @@ create_backup_dirs() {
 backup_database() {
   log_message "Starting database backup..."
   
-  docker exec jitsi-mariadb mysqldump -u root -p"$JITSI_MARIADB_ROOT_PASSWORD" --all-databases > "$JITSI_BACKUP_DIR/mysql_dump_$TIMESTAMP.sql" || {
+  docker exec jitsi-mariadb mariadb-dump -u root -p"$JITSI_MARIADB_ROOT_PASSWORD" --all-databases > "$JITSI_BACKUP_DIR/mysql_dump_$TIMESTAMP.sql" || {
     log_message "ERROR: Failed to backup database"
     return 1
   }

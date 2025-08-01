@@ -6,7 +6,9 @@
       "Bash(systemctl:*)",
       "Bash(ssh:*)",
       "Bash(grep:*)",
-      "Bash(scp:*)"
+      "Bash(scp:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)"
     ],
     "deny": []
   }
