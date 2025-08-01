@@ -255,6 +255,21 @@ __progress() {
   printf_log "PROGRESS" "$PROGRESS_PREFIX" "$1"
 }
 
+__input() {
+  # Usage: __input "prompt message" [default_value]
+  local prompt="$1"
+  local default="$2"
+  
+  printf_reset_color "$JITSI_PURPLE" "\n%s%s" "$INPUT_PREFIX" "$prompt"
+  printf_newline_nc ""
+  
+  if [ -n "$default" ]; then
+    printf_newline_nc "Press Enter to use default: %s" "$default"
+  fi
+  
+  printf_reset_nc "%s " "$prompt:"
+}
+
 __header() {
   JITSI_HEADER_TEXT="$1"
   JITSI_HEADER_LENGTH=`printf "%s" "$JITSI_HEADER_TEXT" | wc -c`
@@ -277,16 +292,15 @@ __header() {
 
 __banner() {
   if [ "$JITSI_RAW_OUTPUT" = "false" ]; then
-    printf "\n${JITSI_BOLD}${JITSI_BLUE}"
-    printf "     ██╗██╗████████╗███████╗██╗    ███╗   ███╗███████╗███████╗████████╗\n"
-    printf "     ██║██║╚══██╔══╝██╔════╝██║    ████╗ ████║██╔════╝██╔════╝╚══██╔══╝\n"
-    printf "     ██║██║   ██║   ███████╗██║    ██╔████╔██║█████╗  █████╗     ██║   \n"
-    printf "██   ██║██║   ██║   ╚════██║██║    ██║╚██╔╝██║██╔══╝  ██╔══╝     ██║   \n"
-    printf "╚█████╔╝██║   ██║   ███████║██║    ██║ ╚═╝ ██║███████╗███████╗   ██║   \n"
-    printf " ╚════╝ ╚═╝   ╚═╝   ╚══════╝╚═╝    ╚═╝     ╚═╝╚══════╝╚══════╝   ╚═╝   \n"
-    printf "${JITSI_NC}"
-    printf "\n${JITSI_BOLD}${JITSI_WHITE}Enterprise Installation System${JITSI_NC}\n"
-    printf "${JITSI_DIM}Version: ${VERSION}${JITSI_NC}\n\n"
+    printf_reset_nc "\n"
+    printf_reset_color "${JITSI_BOLD}${JITSI_BLUE}" "     ██╗██╗████████╗███████╗██╗    ███╗   ███╗███████╗███████╗████████╗\n"
+    printf_reset_color "${JITSI_BOLD}${JITSI_BLUE}" "     ██║██║╚══██╔══╝██╔════╝██║    ████╗ ████║██╔════╝██╔════╝╚══██╔══╝\n"
+    printf_reset_color "${JITSI_BOLD}${JITSI_BLUE}" "     ██║██║   ██║   ███████╗██║    ██╔████╔██║█████╗  █████╗     ██║   \n"
+    printf_reset_color "${JITSI_BOLD}${JITSI_BLUE}" "██   ██║██║   ██║   ╚════██║██║    ██║╚██╔╝██║██╔══╝  ██╔══╝     ██║   \n"
+    printf_reset_color "${JITSI_BOLD}${JITSI_BLUE}" "╚█████╔╝██║   ██║   ███████║██║    ██║ ╚═╝ ██║███████╗███████╗   ██║   \n"
+    printf_newline_color "${JITSI_BOLD}${JITSI_BLUE}" " ╚════╝ ╚═╝   ╚═╝   ╚══════╝╚═╝    ╚═╝     ╚═╝╚══════╝╚══════╝   ╚═╝   "
+    printf_newline_color "${JITSI_BOLD}${JITSI_WHITE}" "\nEnterprise Installation System"
+    printf_newline_color "${JITSI_DIM}" "Version: %s\n" "$VERSION"
   else
     printf "\n=== JITSI MEET ENTERPRISE INSTALLATION ===\n"
     printf "Version: %s\n\n" "$VERSION"
@@ -1518,11 +1532,7 @@ __interactive_config() {
   if [ -z "$JITSI_DOMAIN" ]; then
     JITSI_DEFAULT_DOMAIN=`__detect_domain`
     
-    printf "\n%sDomain name for your Jitsi Meet instance%s\n" "$INPUT_PREFIX" ""
-    if [ -n "$JITSI_DEFAULT_DOMAIN" ]; then
-      printf "Press Enter to use detected domain: %s\n" "$JITSI_DEFAULT_DOMAIN"
-    fi
-    printf "Domain: "
+    __input "Domain name for your Jitsi Meet instance" "$JITSI_DEFAULT_DOMAIN"
     read JITSI_INPUT_DOMAIN
     
     if [ -z "$JITSI_INPUT_DOMAIN" ] && [ -n "$JITSI_DEFAULT_DOMAIN" ]; then
@@ -1545,9 +1555,7 @@ __interactive_config() {
   if [ -z "$JITSI_ADMIN_EMAIL" ]; then
     JITSI_DEFAULT_EMAIL="admin@$JITSI_DOMAIN"
     
-    printf "\n%sAdministrator email address%s\n" "$INPUT_PREFIX" ""
-    printf "Press Enter to use default: %s\n" "$JITSI_DEFAULT_EMAIL"
-    printf "Email: "
+    __input "Administrator email address" "$JITSI_DEFAULT_EMAIL"
     read JITSI_INPUT_EMAIL
     
     if [ -z "$JITSI_INPUT_EMAIL" ]; then
@@ -1565,9 +1573,7 @@ __interactive_config() {
   
   # Organization name
   if [ -z "$JITSI_ORG_NAME" ] || [ "$JITSI_ORG_NAME" = "$JITSI_DEFAULT_ORG_NAME" ]; then
-    printf "\n%sOrganization name for branding%s\n" "$INPUT_PREFIX" ""
-    printf "Press Enter to use default: %s\n" "$JITSI_DEFAULT_ORG_NAME"
-    printf "Organization: "
+    __input "Organization name for branding" "$JITSI_DEFAULT_ORG_NAME"
     read JITSI_INPUT_ORG
     
     if [ -n "$JITSI_INPUT_ORG" ]; then
@@ -1594,13 +1600,13 @@ __interactive_config() {
   JITSI_UPTIME_KUMA_PASSWORD=`__generate_password`
   
   # Show configuration summary
-  printf "\n${JITSI_BOLD}Configuration Summary:${JITSI_NC}\n"
-  printf "  Domain:       %s\n" "$JITSI_DOMAIN"
-  printf "  Email:        %s\n" "$JITSI_ADMIN_EMAIL"
-  printf "  Organization: %s\n" "$JITSI_ORG_NAME"
-  printf "  Timezone:     %s\n" "$JITSI_TIMEZONE"
+  printf_newline_color "${JITSI_BOLD}" "\nConfiguration Summary:"
+  printf_newline_nc "  Domain:       %s" "$JITSI_DOMAIN"
+  printf_newline_nc "  Email:        %s" "$JITSI_ADMIN_EMAIL"
+  printf_newline_nc "  Organization: %s" "$JITSI_ORG_NAME"
+  printf_newline_nc "  Timezone:     %s" "$JITSI_TIMEZONE"
   
-  printf "\n%sProceed with installation? [Y/n] " "$INPUT_PREFIX"
+  printf_reset_color "$JITSI_PURPLE" "\n%sProceed with installation? [Y/n] " "$INPUT_PREFIX"
   read JITSI_CONFIRM
   
   case "$JITSI_CONFIRM" in
@@ -1963,7 +1969,7 @@ __manage_container() {
   
   # Create new container
   __progress "Creating container with image: $JITSI_CONTAINER_IMAGE"
-  eval "docker run $JITSI_CONTAINER_ARGS" || __handle_error "Failed to create container: $JITSI_CONTAINER_NAME"
+  eval "docker run $JITSI_CONTAINER_ARGS" 2>&1 || __handle_error "Failed to create container: $JITSI_CONTAINER_NAME"
   
   __success "Container $JITSI_CONTAINER_NAME deployed"
 }
