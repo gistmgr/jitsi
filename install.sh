@@ -1969,7 +1969,12 @@ __manage_container() {
   
   # Create new container
   __progress "Creating container with image: $JITSI_CONTAINER_IMAGE"
-  eval "docker run $JITSI_CONTAINER_ARGS" 2>&1 || __handle_error "Failed to create container: $JITSI_CONTAINER_NAME"
+  # Build and execute the docker run command
+  JITSI_DOCKER_CMD="docker run $JITSI_CONTAINER_ARGS"
+  if [ "$JITSI_DEBUG_MODE" = "true" ]; then
+    __info "Docker command: $JITSI_DOCKER_CMD"
+  fi
+  eval "$JITSI_DOCKER_CMD" 2>&1 || __handle_error "Failed to create container: $JITSI_CONTAINER_NAME"
   
   __success "Container $JITSI_CONTAINER_NAME deployed"
 }
@@ -2345,10 +2350,10 @@ __deploy_supporting_services() {
     -e GF_USERS_ALLOW_SIGN_UP=false \
     -e GF_AUTH_ANONYMOUS_ENABLED=false \
     -e GF_SMTP_ENABLED=true \
-    -e GF_SMTP_HOST=$JITSI_SMTP_HOST:$JITSI_SMTP_PORT \
-    -e GF_SMTP_FROM_ADDRESS=no-reply@$JITSI_DOMAIN \
-    -e GF_SMTP_FROM_NAME=$JITSI_ORG_NAME \
-    -e TZ=$JITSI_TIMEZONE \
+    -e \"GF_SMTP_HOST=$JITSI_SMTP_HOST:$JITSI_SMTP_PORT\" \
+    -e \"GF_SMTP_FROM_ADDRESS=no-reply@$JITSI_DOMAIN\" \
+    -e \"GF_SMTP_FROM_NAME=$JITSI_ORG_NAME\" \
+    -e \"TZ=$JITSI_TIMEZONE\" \
     -v $JITSI_ROOTFS_DIR/data/grafana:/var/lib/grafana \
     -v $JITSI_ROOTFS_DIR/config/grafana:/etc/grafana \
     grafana/grafana:10.0.0"

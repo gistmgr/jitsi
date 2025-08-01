@@ -4,7 +4,9 @@
       "Bash(mkdir:*)",
       "Bash(chmod:*)",
       "Bash(systemctl:*)",
-      "Bash(ssh:*)"
+      "Bash(ssh:*)",
+      "Bash(grep:*)",
+      "Bash(scp:*)"
     ],
     "deny": []
   }
