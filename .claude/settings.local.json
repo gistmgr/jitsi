@@ -3,7 +3,8 @@
     "allow": [
       "Bash(mkdir:*)",
       "Bash(chmod:*)",
-      "Bash(systemctl:*)"
+      "Bash(systemctl:*)",
+      "Bash(ssh:*)"
     ],
     "deny": []
   }
