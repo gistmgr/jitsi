@@ -137,16 +137,16 @@ __init_colors() {
     JITSI_GLOBE="🌍"
     JITSI_DOCKER="🐳"
     
-    # Prefixes with colors and emojis
-    INFO_PREFIX="${JITSI_BLUE}ℹ${JITSI_NC} "
-    SUCCESS_PREFIX="${JITSI_GREEN}${JITSI_CHECKMARK}${JITSI_NC} "
-    WARNING_PREFIX="${JITSI_YELLOW}⚠${JITSI_NC} "
-    ERROR_PREFIX="${JITSI_RED}${JITSI_CROSSMARK}${JITSI_NC} "
-    INPUT_PREFIX="${JITSI_PURPLE}❯${JITSI_NC} "
-    PROGRESS_PREFIX="${JITSI_CYAN}${JITSI_GEAR}${JITSI_NC} "
-    SECURITY_PREFIX="${JITSI_PURPLE}${JITSI_LOCK}${JITSI_NC} "
-    NETWORK_PREFIX="${JITSI_CYAN}${JITSI_GLOBE}${JITSI_NC} "
-    DOCKER_PREFIX="${JITSI_BLUE}${JITSI_DOCKER}${JITSI_NC} "
+    # Prefixes with Dracula colors and emojis
+    INFO_PREFIX="${JITSI_BRIGHT_CYAN}ℹ${JITSI_NC} "
+    SUCCESS_PREFIX="${JITSI_BRIGHT_GREEN}${JITSI_CHECKMARK}${JITSI_NC} "
+    WARNING_PREFIX="${JITSI_BRIGHT_YELLOW}⚠${JITSI_NC} "
+    ERROR_PREFIX="${JITSI_BRIGHT_RED}${JITSI_CROSSMARK}${JITSI_NC} "
+    INPUT_PREFIX="${JITSI_BRIGHT_PURPLE}❯${JITSI_NC} "
+    PROGRESS_PREFIX="${JITSI_BRIGHT_PINK}${JITSI_GEAR}${JITSI_NC} "
+    SECURITY_PREFIX="${JITSI_BRIGHT_PURPLE}${JITSI_LOCK}${JITSI_NC} "
+    NETWORK_PREFIX="${JITSI_BRIGHT_CYAN}${JITSI_GLOBE}${JITSI_NC} "
+    DOCKER_PREFIX="${JITSI_BRIGHT_BLUE}${JITSI_DOCKER}${JITSI_NC} "
   else
     # Plain text equivalents for raw mode
     JITSI_RED=""
@@ -296,21 +296,32 @@ __spinner() {
   JITSI_SPINNER_CHARS="⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
   JITSI_SPINNER_DELAY="0.1"
   
-  # Start spinner in background
+  # Start spinner in background with colorful animation
   (
     i=0
     while true; do
       char=`printf "%s" "$JITSI_SPINNER_CHARS" | cut -c$((i+1))`
-      printf "\r${PROGRESS_PREFIX}%s %s  " "$JITSI_SPINNER_MSG" "$char"
+      # Cycle through colors for spinner
+      color_idx=$((i % 6))
+      case $color_idx in
+        0) spinner_color="$JITSI_BRIGHT_PURPLE" ;;
+        1) spinner_color="$JITSI_BRIGHT_PINK" ;;
+        2) spinner_color="$JITSI_BRIGHT_CYAN" ;;
+        3) spinner_color="$JITSI_BRIGHT_BLUE" ;;
+        4) spinner_color="$JITSI_BRIGHT_GREEN" ;;
+        5) spinner_color="$JITSI_BRIGHT_YELLOW" ;;
+      esac
+      printf "\r${PROGRESS_PREFIX}%s ${spinner_color}%s${JITSI_NC}  " "$JITSI_SPINNER_MSG" "$char"
       sleep "$JITSI_SPINNER_DELAY"
       i=$(((i+1) % 10))
     done
   ) &
   JITSI_SPINNER_PID=$!
   
-  # Execute command
-  eval "$JITSI_SPINNER_CMD" >/tmp/jitsi-spinner-output.$$ 2>&1
+  # Execute command and capture output
+  JITSI_SPINNER_OUTPUT=`eval "$JITSI_SPINNER_CMD" 2>&1`
   JITSI_SPINNER_RC=$?
+  printf "%s\n" "$JITSI_SPINNER_OUTPUT" > /tmp/jitsi-spinner-output.$$
   
   # Stop spinner
   kill $JITSI_SPINNER_PID 2>/dev/null
@@ -347,30 +358,32 @@ __header() {
   fi
   
   printf "\n"
-  printf_reset_color "${JITSI_BOLD}${JITSI_BLUE}" "═%.0s" `seq 1 60`
+  printf_reset_color "${JITSI_BOLD}${JITSI_PURPLE}" "═%.0s" `seq 1 60`
   printf "\n"
   
-  printf_reset_color "${JITSI_BOLD}${JITSI_BLUE}" "║"
+  printf_reset_color "${JITSI_BOLD}${JITSI_PURPLE}" "║"
   printf "%*s" $JITSI_HEADER_PADDING ""
-  printf_reset_color "${JITSI_BOLD}${JITSI_WHITE}" "%s" "$JITSI_HEADER_TEXT"
+  printf_reset_color "${JITSI_BOLD}${JITSI_PINK}" "%s" "$JITSI_HEADER_TEXT"
   printf "%*s" $JITSI_HEADER_PADDING ""
-  printf_newline_color "${JITSI_BOLD}${JITSI_BLUE}" "║"
+  printf_newline_color "${JITSI_BOLD}${JITSI_PURPLE}" "║"
   
-  printf_reset_color "${JITSI_BOLD}${JITSI_BLUE}" "═%.0s" `seq 1 60`
+  printf_reset_color "${JITSI_BOLD}${JITSI_PURPLE}" "═%.0s" `seq 1 60`
   printf "\n\n"
 }
 
 __banner() {
   if [ "$JITSI_RAW_OUTPUT" = "false" ]; then
     printf "\n"
-    printf_newline_color "${JITSI_BOLD}${JITSI_BLUE}" "     ██╗██╗████████╗███████╗██╗    ███╗   ███╗███████╗███████╗████████╗"
-    printf_newline_color "${JITSI_BOLD}${JITSI_BLUE}" "     ██║██║╚══██╔══╝██╔════╝██║    ████╗ ████║██╔════╝██╔════╝╚══██╔══╝"
-    printf_newline_color "${JITSI_BOLD}${JITSI_BLUE}" "     ██║██║   ██║   ███████╗██║    ██╔████╔██║█████╗  █████╗     ██║   "
-    printf_newline_color "${JITSI_BOLD}${JITSI_BLUE}" "██   ██║██║   ██║   ╚════██║██║    ██║╚██╔╝██║██╔══╝  ██╔══╝     ██║   "
-    printf_newline_color "${JITSI_BOLD}${JITSI_BLUE}" "╚█████╔╝██║   ██║   ███████║██║    ██║ ╚═╝ ██║███████╗███████╗   ██║   "
-    printf_newline_color "${JITSI_BOLD}${JITSI_BLUE}" " ╚════╝ ╚═╝   ╚═╝   ╚══════╝╚═╝    ╚═╝     ╚═╝╚══════╝╚══════╝   ╚═╝   "
-    printf_newline_color "${JITSI_BOLD}${JITSI_WHITE}" "\nEnterprise Installation System"
-    printf_newline_color "${JITSI_DIM}" "Version: %s\n" "$VERSION"
+    # Gradient effect using different Dracula colors
+    printf_newline_color "${JITSI_BOLD}${JITSI_PURPLE}" "     ██╗██╗████████╗███████╗██╗    ███╗   ███╗███████╗███████╗████████╗"
+    printf_newline_color "${JITSI_BOLD}${JITSI_PURPLE}" "     ██║██║╚══██╔══╝██╔════╝██║    ████╗ ████║██╔════╝██╔════╝╚══██╔══╝"
+    printf_newline_color "${JITSI_BOLD}${JITSI_PINK}" "     ██║██║   ██║   ███████╗██║    ██╔████╔██║█████╗  █████╗     ██║   "
+    printf_newline_color "${JITSI_BOLD}${JITSI_PINK}" "██   ██║██║   ██║   ╚════██║██║    ██║╚██╔╝██║██╔══╝  ██╔══╝     ██║   "
+    printf_newline_color "${JITSI_BOLD}${JITSI_CYAN}" "╚█████╔╝██║   ██║   ███████║██║    ██║ ╚═╝ ██║███████╗███████╗   ██║   "
+    printf_newline_color "${JITSI_BOLD}${JITSI_CYAN}" " ╚════╝ ╚═╝   ╚═╝   ╚══════╝╚═╝    ╚═╝     ╚═╝╚══════╝╚══════╝   ╚═╝   "
+    printf "\n"
+    printf_newline_color "${JITSI_BOLD}${JITSI_ORANGE}" "Enterprise Installation System"
+    printf_newline_color "${JITSI_GRAY}" "Version: %s\n" "$VERSION"
   else
     printf "\n=== JITSI MEET ENTERPRISE INSTALLATION ===\n"
     printf "Version: %s\n\n" "$VERSION"
@@ -455,7 +468,7 @@ __detect_distribution() {
         8*|9*)
           JITSI_DISTRO_FAMILY="rhel"
           JITSI_PKG_MANAGER="dnf"
-          __info "Detected $JITSI_OS_ID $JITSI_OS_VERSION"
+          printf "${INFO_PREFIX}Detected ${JITSI_BOLD}${JITSI_ORANGE}$JITSI_OS_ID${JITSI_NC} ${JITSI_GRAY}$JITSI_OS_VERSION${JITSI_NC}\n"
           ;;
         *)
           __error "$JITSI_OS_ID $JITSI_OS_VERSION is not supported"
@@ -2061,16 +2074,43 @@ __manage_container() {
 __wait_for_container_health() {
   JITSI_WAIT_CONTAINER="$1"
   JITSI_WAIT_TIMEOUT="${2:-$JITSI_SERVICE_STARTUP_TIMEOUT}"
+  JITSI_WAIT_DB_PASSWORD="$3"  # Optional database password for MariaDB
   JITSI_WAIT_START=`date +%s`
   
   __progress "Waiting for $JITSI_WAIT_CONTAINER to be healthy..."
+  
+  # Initial wait for container to start
+  sleep 3
   
   while true; do
     JITSI_CONTAINER_STATUS=`docker inspect -f '{{.State.Running}}' "$JITSI_WAIT_CONTAINER" 2>/dev/null || printf "false"`
     
     if [ "$JITSI_CONTAINER_STATUS" = "true" ]; then
-      __success "$JITSI_WAIT_CONTAINER is running"
-      return 0
+      # Special health check for MariaDB - check if it can accept connections
+      if [ "$JITSI_WAIT_CONTAINER" = "jitsi-mariadb" ]; then
+        if [ -n "$JITSI_WAIT_DB_PASSWORD" ]; then
+          if docker exec "$JITSI_WAIT_CONTAINER" mariadb -u root -p"$JITSI_WAIT_DB_PASSWORD" -e "SELECT 1" >/dev/null 2>&1; then
+            __success "$JITSI_WAIT_CONTAINER is ready"
+            return 0
+          fi
+        else
+          # Fallback: just check if mariadb process is running
+          if docker exec "$JITSI_WAIT_CONTAINER" pgrep mariadb >/dev/null 2>&1; then
+            __success "$JITSI_WAIT_CONTAINER is running"
+            return 0
+          fi
+        fi
+      # Special health check for Valkey/Redis
+      elif [ "$JITSI_WAIT_CONTAINER" = "jitsi-valkey" ]; then
+        if docker exec "$JITSI_WAIT_CONTAINER" valkey-cli ping >/dev/null 2>&1; then
+          __success "$JITSI_WAIT_CONTAINER is ready"
+          return 0
+        fi
+      # For other containers, just check if running
+      else
+        __success "$JITSI_WAIT_CONTAINER is running"
+        return 0
+      fi
     fi
     
     JITSI_WAIT_CURRENT=`date +%s`
@@ -2081,11 +2121,12 @@ __wait_for_container_health() {
       return 1
     fi
     
-    if [ `expr $JITSI_WAIT_ELAPSED % 30` -eq 0 ]; then
+    # Show progress every 30 seconds, but not at 0
+    if [ $JITSI_WAIT_ELAPSED -ge 30 ] && [ `expr $JITSI_WAIT_ELAPSED % 30` -eq 0 ]; then
       __info "Still waiting for $JITSI_WAIT_CONTAINER... ${JITSI_WAIT_ELAPSED}s elapsed"
     fi
     
-    sleep 5
+    sleep 2
   done
 }
 
@@ -2111,7 +2152,7 @@ __deploy_mariadb() {
     mariadb:11.2"
   
   __manage_container "jitsi-mariadb" "mariadb:11.2" "$JITSI_MARIADB_ARGS"
-  __wait_for_container_health "jitsi-mariadb"
+  __wait_for_container_health "jitsi-mariadb" "$JITSI_SERVICE_STARTUP_TIMEOUT" "$JITSI_MARIADB_ROOT_PASSWORD"
   
   # Create Keycloak database
   __progress "Creating Keycloak database..."
@@ -3271,14 +3312,19 @@ __main() {
   
   # Service Deployment
   __header "Deploying Services"
-  __deploy_mariadb
-  __deploy_valkey
-  __deploy_keycloak
-  __deploy_prosody
-  __deploy_jicofo
-  __deploy_jvb
-  __deploy_jitsi_server
-  __deploy_supporting_services
+  
+  __info "Starting service deployment..."
+  
+  __deploy_mariadb || __handle_error "MariaDB deployment failed"
+  __deploy_valkey || __handle_error "Valkey deployment failed"
+  __deploy_keycloak || __handle_error "Keycloak deployment failed"
+  __deploy_prosody || __handle_error "Prosody deployment failed"
+  __deploy_jicofo || __handle_error "Jicofo deployment failed"
+  __deploy_jvb || __handle_error "JVB deployment failed"
+  __deploy_jitsi_server || __handle_error "Jitsi server deployment failed"
+  __deploy_supporting_services || __handle_error "Supporting services deployment failed"
+  
+  __success "All services deployed successfully"
   
   # Automation Setup
   __generate_helper_scripts
