@@ -209,7 +209,9 @@ printf_newline_color() {
 
 printf_newline_nc() {
   # Usage: printf_newline_nc "format string" args...
-  printf "${1}\n" "$@"
+  local format="$1"
+  shift
+  printf "${format}\n" "$@"
 }
 
 printf_reset_color() {
@@ -221,7 +223,9 @@ printf_reset_color() {
 
 printf_reset_nc() {
   # Usage: printf_reset_nc "format string" args...
-  printf "${1}" "$@"
+  local format="$1"
+  shift
+  printf "${format}" "$@"
 }
 
 printf_log() {
@@ -276,28 +280,33 @@ __header() {
   JITSI_HEADER_PADDING=`expr 60 - $JITSI_HEADER_LENGTH`
   JITSI_HEADER_PADDING=`expr $JITSI_HEADER_PADDING / 2`
   
-  printf_reset_nc "\n"
+  # Ensure padding is never negative
+  if [ $JITSI_HEADER_PADDING -lt 0 ]; then
+    JITSI_HEADER_PADDING=0
+  fi
+  
+  printf "\n"
   printf_reset_color "${JITSI_BOLD}${JITSI_BLUE}" "═%.0s" `seq 1 60`
-  printf_newline_nc ""
+  printf "\n"
   
   printf_reset_color "${JITSI_BOLD}${JITSI_BLUE}" "║"
-  printf_reset_nc "%*s" $JITSI_HEADER_PADDING ""
+  printf "%*s" $JITSI_HEADER_PADDING ""
   printf_reset_color "${JITSI_BOLD}${JITSI_WHITE}" "%s" "$JITSI_HEADER_TEXT"
-  printf_reset_nc "%*s" $JITSI_HEADER_PADDING ""
+  printf "%*s" $JITSI_HEADER_PADDING ""
   printf_newline_color "${JITSI_BOLD}${JITSI_BLUE}" "║"
   
   printf_reset_color "${JITSI_BOLD}${JITSI_BLUE}" "═%.0s" `seq 1 60`
-  printf_newline_nc "\n"
+  printf "\n\n"
 }
 
 __banner() {
   if [ "$JITSI_RAW_OUTPUT" = "false" ]; then
-    printf_reset_nc "\n"
-    printf_reset_color "${JITSI_BOLD}${JITSI_BLUE}" "     ██╗██╗████████╗███████╗██╗    ███╗   ███╗███████╗███████╗████████╗\n"
-    printf_reset_color "${JITSI_BOLD}${JITSI_BLUE}" "     ██║██║╚══██╔══╝██╔════╝██║    ████╗ ████║██╔════╝██╔════╝╚══██╔══╝\n"
-    printf_reset_color "${JITSI_BOLD}${JITSI_BLUE}" "     ██║██║   ██║   ███████╗██║    ██╔████╔██║█████╗  █████╗     ██║   \n"
-    printf_reset_color "${JITSI_BOLD}${JITSI_BLUE}" "██   ██║██║   ██║   ╚════██║██║    ██║╚██╔╝██║██╔══╝  ██╔══╝     ██║   \n"
-    printf_reset_color "${JITSI_BOLD}${JITSI_BLUE}" "╚█████╔╝██║   ██║   ███████║██║    ██║ ╚═╝ ██║███████╗███████╗   ██║   \n"
+    printf "\n"
+    printf_newline_color "${JITSI_BOLD}${JITSI_BLUE}" "     ██╗██╗████████╗███████╗██╗    ███╗   ███╗███████╗███████╗████████╗"
+    printf_newline_color "${JITSI_BOLD}${JITSI_BLUE}" "     ██║██║╚══██╔══╝██╔════╝██║    ████╗ ████║██╔════╝██╔════╝╚══██╔══╝"
+    printf_newline_color "${JITSI_BOLD}${JITSI_BLUE}" "     ██║██║   ██║   ███████╗██║    ██╔████╔██║█████╗  █████╗     ██║   "
+    printf_newline_color "${JITSI_BOLD}${JITSI_BLUE}" "██   ██║██║   ██║   ╚════██║██║    ██║╚██╔╝██║██╔══╝  ██╔══╝     ██║   "
+    printf_newline_color "${JITSI_BOLD}${JITSI_BLUE}" "╚█████╔╝██║   ██║   ███████║██║    ██║ ╚═╝ ██║███████╗███████╗   ██║   "
     printf_newline_color "${JITSI_BOLD}${JITSI_BLUE}" " ╚════╝ ╚═╝   ╚═╝   ╚══════╝╚═╝    ╚═╝     ╚═╝╚══════╝╚══════╝   ╚═╝   "
     printf_newline_color "${JITSI_BOLD}${JITSI_WHITE}" "\nEnterprise Installation System"
     printf_newline_color "${JITSI_DIM}" "Version: %s\n" "$VERSION"
