@@ -93,29 +93,29 @@ JITSI_DEBUG_MODE="false"
 __init_colors() {
   if [ -t 1 ] && [ "$JITSI_RAW_OUTPUT" = "false" ]; then
     # Terminal colors
-    JITSI_RED='\033[0;31m'
-    JITSI_GREEN='\033[0;32m'
-    JITSI_YELLOW='\033[0;33m'
-    JITSI_BLUE='\033[0;34m'
-    JITSI_PURPLE='\033[0;35m'
-    JITSI_CYAN='\033[0;36m'
-    JITSI_WHITE='\033[0;37m'
-    JITSI_BOLD='\033[1m'
-    JITSI_DIM='\033[2m'
-    JITSI_NC='\033[0m'
+    JITSI_RED=$'\033[0;31m'
+    JITSI_GREEN=$'\033[0;32m'
+    JITSI_YELLOW=$'\033[0;33m'
+    JITSI_BLUE=$'\033[0;34m'
+    JITSI_PURPLE=$'\033[0;35m'
+    JITSI_CYAN=$'\033[0;36m'
+    JITSI_WHITE=$'\033[0;37m'
+    JITSI_BOLD=$'\033[1m'
+    JITSI_DIM=$'\033[2m'
+    JITSI_NC=$'\033[0m'
     
     # Bright colors
-    JITSI_BRIGHT_RED='\033[1;31m'
-    JITSI_BRIGHT_GREEN='\033[1;32m'
-    JITSI_BRIGHT_YELLOW='\033[1;33m'
-    JITSI_BRIGHT_BLUE='\033[1;34m'
-    JITSI_BRIGHT_PURPLE='\033[1;35m'
-    JITSI_BRIGHT_CYAN='\033[1;36m'
+    JITSI_BRIGHT_RED=$'\033[1;31m'
+    JITSI_BRIGHT_GREEN=$'\033[1;32m'
+    JITSI_BRIGHT_YELLOW=$'\033[1;33m'
+    JITSI_BRIGHT_BLUE=$'\033[1;34m'
+    JITSI_BRIGHT_PURPLE=$'\033[1;35m'
+    JITSI_BRIGHT_CYAN=$'\033[1;36m'
     
     # Background colors
-    JITSI_BG_GREEN='\033[42m'
-    JITSI_BG_RED='\033[41m'
-    JITSI_BG_BLUE='\033[44m'
+    JITSI_BG_GREEN=$'\033[42m'
+    JITSI_BG_RED=$'\033[41m'
+    JITSI_BG_BLUE=$'\033[44m'
     
     # Visual symbols
     JITSI_CHECKMARK="✓"
@@ -238,23 +238,21 @@ __info() {
 }
 
 __success() {
-  printf "${SUCCESS_PREFIX}%s\n" "$1"
-  __log_message "SUCCESS" "$1"
+  printf_log "SUCCESS" "$SUCCESS_PREFIX" "$1"
 }
 
 __warning() {
-  printf "%s${JITSI_YELLOW}%s${JITSI_NC}\n" "$WARNING_PREFIX" "$1"
+  printf_newline_color "$JITSI_YELLOW" "%s%s" "$WARNING_PREFIX" "$1"
   __log_message "WARNING" "$1"
 }
 
 __error() {
-  printf "%s${JITSI_RED}%s${JITSI_NC}\n" "$ERROR_PREFIX" "$1" >&2
+  printf_newline_color "$JITSI_RED" "%s%s" "$ERROR_PREFIX" "$1" >&2
   __log_message "ERROR" "$1"
 }
 
 __progress() {
-  printf "%s%s\n" "$PROGRESS_PREFIX" "$1"
-  __log_message "PROGRESS" "$1"
+  printf_log "PROGRESS" "$PROGRESS_PREFIX" "$1"
 }
 
 __header() {
@@ -263,19 +261,18 @@ __header() {
   JITSI_HEADER_PADDING=`expr 60 - $JITSI_HEADER_LENGTH`
   JITSI_HEADER_PADDING=`expr $JITSI_HEADER_PADDING / 2`
   
-  printf "\n${JITSI_BOLD}${JITSI_BLUE}"
-  printf "═%.0s" `seq 1 60`
-  printf "${JITSI_NC}\n"
+  printf_reset_nc "\n"
+  printf_reset_color "${JITSI_BOLD}${JITSI_BLUE}" "═%.0s" `seq 1 60`
+  printf_newline_nc ""
   
-  printf "${JITSI_BOLD}${JITSI_BLUE}║${JITSI_NC}"
-  printf "%*s" $JITSI_HEADER_PADDING ""
-  printf "${JITSI_BOLD}${JITSI_WHITE}%s${JITSI_NC}" "$JITSI_HEADER_TEXT"
-  printf "%*s" $JITSI_HEADER_PADDING ""
-  printf "${JITSI_BOLD}${JITSI_BLUE}║${JITSI_NC}\n"
+  printf_reset_color "${JITSI_BOLD}${JITSI_BLUE}" "║"
+  printf_reset_nc "%*s" $JITSI_HEADER_PADDING ""
+  printf_reset_color "${JITSI_BOLD}${JITSI_WHITE}" "%s" "$JITSI_HEADER_TEXT"
+  printf_reset_nc "%*s" $JITSI_HEADER_PADDING ""
+  printf_newline_color "${JITSI_BOLD}${JITSI_BLUE}" "║"
   
-  printf "${JITSI_BOLD}${JITSI_BLUE}"
-  printf "═%.0s" `seq 1 60`
-  printf "${JITSI_NC}\n\n"
+  printf_reset_color "${JITSI_BOLD}${JITSI_BLUE}" "═%.0s" `seq 1 60`
+  printf_newline_nc "\n"
 }
 
 __banner() {
