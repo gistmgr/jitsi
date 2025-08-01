@@ -54,7 +54,6 @@ JITSI_DEFAULT_ORG_NAME="CasjaysDev MEET"
 JITSI_ORG_NAME="${JITSI_ORG_NAME:-$JITSI_DEFAULT_ORG_NAME}"
 JITSI_DEFAULT_TIMEZONE="America/New_York"
 JITSI_DEFAULT_ADMIN_USERNAME="administrator"
-JITSI_DEFAULT_KEYCLOAK_ADMIN_USER="administrator@domain"
 JITSI_ROOM_CLEANUP_INTERVAL="604800"
 JITSI_ANONYMOUS_RATE_LIMIT="5"
 JITSI_AUTHENTICATED_RATE_LIMIT="20"
@@ -1218,7 +1217,7 @@ JITSI_ADMIN_EMAIL="$JITSI_ADMIN_EMAIL"
 JITSI_TIMEZONE="$JITSI_TIMEZONE"
 
 # Authentication Configuration
-JITSI_KEYCLOAK_ADMIN_USER="$JITSI_DEFAULT_KEYCLOAK_ADMIN_USER"
+JITSI_KEYCLOAK_ADMIN_USER="${JITSI_KEYCLOAK_ADMIN_USER:-administrator@$JITSI_DOMAIN}"
 JITSI_KEYCLOAK_ADMIN_PASSWORD="$JITSI_KEYCLOAK_ADMIN_PASSWORD"
 JITSI_DEFAULT_ADMIN_USERNAME="$JITSI_DEFAULT_ADMIN_USERNAME"
 JITSI_JWT_APP_SECRET="$JITSI_JWT_APP_SECRET"
@@ -1590,8 +1589,8 @@ __interactive_config() {
     fi
   fi
   
-  # Update Keycloak admin email
-  JITSI_DEFAULT_KEYCLOAK_ADMIN_USER="administrator@$JITSI_DOMAIN"
+  # Update Keycloak admin user to use the domain
+  JITSI_KEYCLOAK_ADMIN_USER="administrator@$JITSI_DOMAIN"
   
   # Generate all passwords
   __info "Generating secure passwords for services..."
@@ -1639,14 +1638,15 @@ __store_passwords() {
 # IMPORTANT: Save these credentials securely and delete this file!
 # This file will be automatically deleted in 24 hours.
 
-## Keycloak Admin Console
+## Keycloak System Administration (Global Keycloak Admin)
 URL: https://auth.$JITSI_DOMAIN/admin/
-Username: admin
+Username: administrator@$JITSI_DOMAIN
 Password: $JITSI_KEYCLOAK_ADMIN_PASSWORD
 
-## Jitsi Admin User
-Username: $JITSI_DEFAULT_ADMIN_USERNAME
-Email: $JITSI_DEFAULT_KEYCLOAK_ADMIN_USER
+## Jitsi Organization Administrator (Jitsi Meet Admin)
+Username: administrator
+Realm: jitsi (or your organization realm)
+Note: This account will be created in the Jitsi realm for meeting administration
 
 ## Grafana Monitoring
 URL: https://grafana.$JITSI_DOMAIN/
@@ -2092,7 +2092,7 @@ __deploy_keycloak() {
     -e KC_DB_URL=jdbc:mariadb://jitsi-mariadb:3306/keycloak \
     -e KC_DB_USERNAME=keycloak \
     -e KC_DB_PASSWORD=$JITSI_KEYCLOAK_DB_PASSWORD \
-    -e KEYCLOAK_ADMIN=admin \
+    -e KEYCLOAK_ADMIN=administrator@$JITSI_DOMAIN \
     -e KEYCLOAK_ADMIN_PASSWORD=$JITSI_KEYCLOAK_ADMIN_PASSWORD \
     -e KC_PROXY=edge \
     -e KC_HOSTNAME_STRICT=false \
@@ -3018,7 +3018,7 @@ Main Application:
 
 Authentication (Keycloak):
   Admin Console: https://auth.$JITSI_DOMAIN/admin/
-  Username: admin
+  Username: administrator@$JITSI_DOMAIN
   Password: See .passwords file
 
 Monitoring:
